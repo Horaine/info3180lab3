@@ -7,7 +7,7 @@ This file creates your application.
 
 from app import app
 from flask import render_template, request, redirect, url_for, flash
-
+from app.forms import ContactForm
 
 ###
 # Routing for your application.
@@ -35,7 +35,32 @@ def send_text_file(file_name):
     file_dot_text = file_name + '.txt'
     return app.send_static_file(file_dot_text)
 
+def flash_errors(form):
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u"Error in the %s field - %s" % (
+                getattr(form, field).label.text,
+                error
+            ), 'danger')
 
+@app.route('/contact/')
+def contact():
+    form = ContactForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            """Allows user to contact owners"""
+            
+            name = form.name.data
+            email = form.email.data
+            subject = form.subject.data
+            message = form.message.data
+            
+            flash('You have successfully filled out the form', 'success')
+            return render_template('contact.html', name=name, email=email, subject=subject, message=message)
+    
+        flash_errors(form)
+    return render_template('contact.html', form=form)
+    
 @app.after_request
 def add_header(response):
     """
